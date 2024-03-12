@@ -1,6 +1,20 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <pthread.h>
 int rows, cols;
+int n1, m1, n2, m2;
+int a[20][20]; int b[20][20]; int c[20][20];
+void multiplication(){
+    for (int i = 0; i < n1; i++) {
+        for (int j = 0; j < m2; j++) {
+            c[i][j] = 0;
+            for (int k = 0; k < m1; k++) {
+                c[i][j] += a[i][k] * b[k][j];
+            }
+        }
+    }
+}
+
 void get_size(FILE *file){    
     cols = 0;
     rows = 0;
@@ -23,7 +37,7 @@ void get_size(FILE *file){
     if(rows != 0)cols /= rows;
     fclose(file);
 }
-void read_matrix(FILE *file, int n, int m, int matrix[n][m]){
+void read_matrix(FILE *file, int n, int m, int matrix[20][20]){
     if(file == NULL){
         printf("Error reading file.\n");
         return; 
@@ -43,10 +57,10 @@ int main() {
     FILE *aFile;
     aFile = fopen("a.txt", "r");
     get_size(aFile);
-    int n1 = rows, m1 = cols;
+    n1 = rows, m1 = cols;
 
     // Reading Matrix a.
-    int a[n1][m1];
+    // int a[n1][m1];
     aFile = fopen("a.txt", "r");
     read_matrix(aFile, n1, m1, a);
 
@@ -57,6 +71,7 @@ int main() {
         }
         printf("\n");
     }
+    printf("\n");
     fclose(aFile);
 
     // MATRIX B
@@ -66,10 +81,10 @@ int main() {
     bFile = fopen("b.txt", "r");
     rows = 0, cols = 0;
     get_size(bFile);
-    int n2 = rows, m2 = cols;
+    n2 = rows, m2 = cols;
 
     // Reading Matrix b.
-    int b[n2][m2];
+    // int b[n2][m2];
     bFile = fopen("b.txt", "r");
     read_matrix(bFile, n2, m2, b);
 
@@ -80,6 +95,23 @@ int main() {
         }
         printf("\n");
     }
+    printf("\n");
     fclose(bFile);
+
+    // MATRIX C
+    // int c[n1][m2];
+    for(int i = 0; i < n1; i++){
+        for(int j = 0; j < m2; j++){
+            c[i][j] = 0;
+        }
+        // printf("\n");
+    }
+    multiplication();
+    for(int i = 0; i < n1; i++){
+        for(int j = 0; j < m2; j++){
+            printf("%d ", c[i][j]);
+        }
+        printf("\n");
+    }
     return 0;
 }
