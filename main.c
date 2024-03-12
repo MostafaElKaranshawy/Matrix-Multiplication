@@ -2,24 +2,50 @@
 #include <stdlib.h>
 #include <pthread.h>
 #include <string.h>
+#include <time.h>
 
 int rows, cols;
 int n1, m1, n2, m2;
-int a[20][20]; int b[20][20]; int c[20][20];
+int a[20][20]; int b[20][20]; 
+int c1[20][20];
+int c2[20][20];
+int c3[20][20];
 
 typedef struct {
     int row;
     int col;
 } thread_args;
 
-void *multiplication(void *args){
+void *multiplication_per_matrix(void *args){
     for (int i = 0; i < n1; i++) {
         for (int j = 0; j < m2; j++) {
-            c[i][j] = 0;
+            c1[i][j] = 0;
             for (int k = 0; k < m1; k++) {
-                c[i][j] += a[i][k] * b[k][j];
+                c1[i][j] += a[i][k] * b[k][j];
             }
         }
+    }
+    pthread_exit(NULL);
+}
+
+void *multiplication_per_line(void *args){
+    thread_args *arg = (thread_args *)args;
+    int i = arg->row;
+    for (int j = 0; j < m2; j++) {
+        c2[i][j] = 0;
+        for (int k = 0; k < m1; k++) {
+            c2[i][j] += a[i][k] * b[k][j];
+        }
+    }
+    pthread_exit(NULL);
+}
+
+void *multiplication_per_element(void *args){
+    thread_args *arg = (thread_args *)args;
+    int i = arg->row;
+    int j = arg->col;
+    for (int k = 0; k < m1; k++) {
+        c3[i][j] += a[i][k] * b[k][j];
     }
     pthread_exit(NULL);
 }
@@ -46,16 +72,42 @@ void read_matrix(FILE *file, int n, int m, int matrix[20][20]){
     }
 }
 
-void write_to_file(int matrix[20][20], int n, int m){
-    FILE *file = fopen("c_per_matrix.txt", "a");
-    fprintf(file, "Method: A thread per matrix\n");
+void write_to_file(int matrix[20][20], int n, int m, int method) {
+    char line[100] = ""; // Allocate memory for the file name
+    char text[100] = ""; // Allocate memory for the text
+
+    switch (method) {
+        case 1:
+            strcat(line, "c_per_matrix.txt");
+            strcat(text, "Method: A thread per matrix\n");
+            break;
+        case 2:
+            strcat(line, "c_per_line.txt");
+            strcat(text, "Method: A thread per row\n");
+            break;
+        case 3:
+            strcat(line, "c_per_element.txt"); // Add missing ".txt" extension
+            strcat(text, "Method: A thread per element\n");
+            break;
+        default:
+            break;
+    }
+
+    FILE *file = fopen(line, "a");
+    if (file == NULL) {
+        printf("Error opening file for writing.\n");
+        return;
+    }
+
+    fprintf(file, "%s", text);
     fprintf(file, "Rows: %d, Cols: %d\n", n, m);
-    for(int i = 0; i < n; i++){
-        for(int j = 0; j < m; j++){
+    for (int i = 0; i < n; i++) {
+        for (int j = 0; j < m; j++) {
             fprintf(file, "%d ", matrix[i][j]);
         }
-        fprintf(file,"\n");
+        fprintf(file, "\n");
     }
+
     fclose(file);
 }
 
@@ -106,21 +158,75 @@ int main() {
     fclose(bFile);
 
     // MATRIX C
-    // int c[n1][m2];
+    // int c1[n1][m2];
     for(int i = 0; i < n1; i++){
         for(int j = 0; j < m2; j++){
-            c[i][j] = 0;
+            c1[i][j] = 0;
         }
         // printf("\n");
     }
+
+// THREADS PER MATRIX.
     pthread_t thread;
     thread_args *args = malloc(sizeof(thread_args));
-    pthread_create(&thread, NULL, multiplication, (void *)args);
+    pthread_create(&thread, NULL, multiplication_per_matrix, (void *)args);
     pthread_join(thread, NULL);
-    write_to_file(c, n1, m2);
+    write_to_file(c1, n1, m2, 1);
+
+
+// THREADS PER ROW.
+    pthread_t threads2[n1];
+    thread_args args2[n1];
+    for(int i = 0; i < n1; i++){
+        args2[i].row = i;
+        pthread_create(&threads2[i], NULL, multiplication_per_line, &args2[i]);
+    }
+    for (int i = 0; i < n1; i++) {
+        pthread_join(threads2[i], NULL);
+    }
+    write_to_file(c2, n1,m2,2);
+
+
+// THREADS PER ELEMENT.
+    pthread_t threads3[n1*m2];
+    thread_args args3[n1*m2];
+    int count = 0;
     for(int i = 0; i < n1; i++){
         for(int j = 0; j < m2; j++){
-            printf("%d ", c[i][j]);
+            args3[count].row = i;
+            args3[count].col = j;
+            pthread_create(&threads3[count], NULL, multiplication_per_element, &args3[count]);
+            count++;
+        }
+    }
+    count = 0;
+    for (int i = 0; i < n1; i++) {
+        for(int j = 0; j < m2; j++){
+            pthread_join(threads3[count], NULL);
+            count++;
+        }
+    }
+    write_to_file(c3, n1,m2,3);
+
+
+// Print matrix of each method.
+    for(int i = 0; i < n1; i++){
+        for(int j = 0; j < m2; j++){
+            printf("%d ", c1[i][j]);
+        }
+        printf("\n");
+    }
+    printf("\n");
+    for(int i = 0; i < n1; i++){
+        for(int j = 0; j < m2; j++){
+            printf("%d ", c2[i][j]);
+        }
+        printf("\n");
+    }
+    printf("\n");
+    for(int i = 0; i < n1; i++){
+        for(int j = 0; j < m2; j++){
+            printf("%d ", c3[i][j]);
         }
         printf("\n");
     }
