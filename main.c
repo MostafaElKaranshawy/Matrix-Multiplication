@@ -1,6 +1,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <pthread.h>
+#include <string.h>
+
 int rows, cols;
 int n1, m1, n2, m2;
 int a[20][20]; int b[20][20]; int c[20][20];
@@ -22,29 +24,17 @@ void *multiplication(void *args){
     pthread_exit(NULL);
 }
 
-void get_size(FILE *file){    
-    cols = 0;
+void get_size(FILE *file) {
     rows = 0;
-    int num;
-    if (file == NULL) {
-        printf("Error reading file.\n");
-        return;
-    }
-    while (fscanf(file, "%d", &num) == 1) {
-        cols++;
-    }
-    rewind(file);
-    char* line = (char*)malloc(40 * sizeof(char));
-    if (line == NULL) {
-        printf("Memory allocation failed\n");
-        return;
-    }
-    while(fgets(line, 40, file))rows++;
-    free(line);
-    if(rows != 0)cols /= rows;
+    cols = 0;
+    fscanf(file, "row=%d col=%d", &rows, &cols);
+    printf("rows %d, cols %d\n", rows, cols);
     fclose(file);
 }
+
 void read_matrix(FILE *file, int n, int m, int matrix[20][20]){
+    char *line = malloc(20);
+    fgets(line, 20, file);
     if(file == NULL){
         printf("Error reading file.\n");
         return; 
