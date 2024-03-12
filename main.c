@@ -4,7 +4,13 @@
 int rows, cols;
 int n1, m1, n2, m2;
 int a[20][20]; int b[20][20]; int c[20][20];
-void multiplication(){
+
+typedef struct {
+    int row;
+    int col;
+} thread_args;
+
+void *multiplication(void *args){
     for (int i = 0; i < n1; i++) {
         for (int j = 0; j < m2; j++) {
             c[i][j] = 0;
@@ -13,6 +19,7 @@ void multiplication(){
             }
         }
     }
+    pthread_exit(NULL);
 }
 
 void get_size(FILE *file){    
@@ -49,6 +56,18 @@ void read_matrix(FILE *file, int n, int m, int matrix[20][20]){
     }
 }
 
+void write_to_file(int matrix[20][20], int n, int m){
+    FILE *file = fopen("c_per_matrix.txt", "a");
+    fprintf(file, "Method: A thread per matrix\n");
+    fprintf(file, "Rows: %d, Cols: %d\n", n, m);
+    for(int i = 0; i < n; i++){
+        for(int j = 0; j < m; j++){
+            fprintf(file, "%d ", matrix[i][j]);
+        }
+        fprintf(file,"\n");
+    }
+    fclose(file);
+}
 
 int main() {
     // MATRIX A
@@ -60,7 +79,6 @@ int main() {
     n1 = rows, m1 = cols;
 
     // Reading Matrix a.
-    // int a[n1][m1];
     aFile = fopen("a.txt", "r");
     read_matrix(aFile, n1, m1, a);
 
@@ -84,7 +102,6 @@ int main() {
     n2 = rows, m2 = cols;
 
     // Reading Matrix b.
-    // int b[n2][m2];
     bFile = fopen("b.txt", "r");
     read_matrix(bFile, n2, m2, b);
 
@@ -106,7 +123,11 @@ int main() {
         }
         // printf("\n");
     }
-    multiplication();
+    pthread_t thread;
+    thread_args *args = malloc(sizeof(thread_args));
+    pthread_create(&thread, NULL, multiplication, (void *)args);
+    pthread_join(thread, NULL);
+    write_to_file(c, n1, m2);
     for(int i = 0; i < n1; i++){
         for(int j = 0; j < m2; j++){
             printf("%d ", c[i][j]);
