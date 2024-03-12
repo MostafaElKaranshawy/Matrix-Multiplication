@@ -167,16 +167,20 @@ int main() {
     }
 
 // THREADS PER MATRIX.
+    clock_t start_time1 = clock();
     pthread_t thread;
     thread_args *args = malloc(sizeof(thread_args));
     pthread_create(&thread, NULL, multiplication_per_matrix, (void *)args);
     pthread_join(thread, NULL);
+    clock_t end_time1 = clock();
+    double total_time1 = (double)(end_time1 - start_time1) / CLOCKS_PER_SEC;
     write_to_file(c1, n1, m2, 1);
 
 
 // THREADS PER ROW.
     pthread_t threads2[n1];
     thread_args args2[n1];
+    clock_t start_time2 = clock();
     for(int i = 0; i < n1; i++){
         args2[i].row = i;
         pthread_create(&threads2[i], NULL, multiplication_per_line, &args2[i]);
@@ -184,6 +188,8 @@ int main() {
     for (int i = 0; i < n1; i++) {
         pthread_join(threads2[i], NULL);
     }
+    clock_t end_time2 = clock();
+    double total_time2 = (double)(end_time2 - start_time2) / CLOCKS_PER_SEC;
     write_to_file(c2, n1,m2,2);
 
 
@@ -191,6 +197,7 @@ int main() {
     pthread_t threads3[n1*m2];
     thread_args args3[n1*m2];
     int count = 0;
+    clock_t start_time3 = clock();
     for(int i = 0; i < n1; i++){
         for(int j = 0; j < m2; j++){
             args3[count].row = i;
@@ -206,29 +213,12 @@ int main() {
             count++;
         }
     }
+    clock_t end_time3 = clock();
+    double total_time3 = (double)(end_time3 - start_time3) / CLOCKS_PER_SEC;
     write_to_file(c3, n1,m2,3);
 
-
-// Print matrix of each method.
-    for(int i = 0; i < n1; i++){
-        for(int j = 0; j < m2; j++){
-            printf("%d ", c1[i][j]);
-        }
-        printf("\n");
-    }
-    printf("\n");
-    for(int i = 0; i < n1; i++){
-        for(int j = 0; j < m2; j++){
-            printf("%d ", c2[i][j]);
-        }
-        printf("\n");
-    }
-    printf("\n");
-    for(int i = 0; i < n1; i++){
-        for(int j = 0; j < m2; j++){
-            printf("%d ", c3[i][j]);
-        }
-        printf("\n");
-    }
+    printf("Method: A Thread Per Matrix takes %lf msec\n", total_time1*1000);
+    printf("Method: A Thread Per Row takes %lf msec\n", total_time2*1000);
+    printf("Method: A Thread Per Element takes %lf msec\n", total_time3*1000);
     return 0;
 }
