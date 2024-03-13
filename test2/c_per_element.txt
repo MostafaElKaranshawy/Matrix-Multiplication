@@ -1,0 +1,5 @@
+Method: A thread per element
+Rows: 3, Cols: 4
+155 166 177 188 
+121 130 139 148 
+173 186 199 212 
