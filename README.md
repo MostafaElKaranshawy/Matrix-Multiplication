@@ -1,5 +1,5 @@
 # Matrix-Multiplication
-## Matrix Multiplication Using different ways of Threads.
+## Matrix Multiplication Using different ways of Threads based on Unix System.
   
   • A Thread per Matrix: creating only one Thread of the whole maltiplication.
   
